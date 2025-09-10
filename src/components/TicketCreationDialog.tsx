@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { BookOpen, FlaskConical, Users, HelpCircle } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE as string;
+const API_BASE = 'https://api.bearqueue.com'
 
 interface TicketCreationDialogProps {
   open: boolean;
