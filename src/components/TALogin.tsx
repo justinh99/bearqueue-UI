@@ -20,7 +20,7 @@ import {
 import { Users, GraduationCap, FileText, LogOut, UserCheck } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API_BASE = 'https://api.bearqueue.com'
+const API_BASE = 'http://localhost:8000'
 
 type Role = "student" | "ta" | "admin";
 type Me = {
@@ -78,6 +78,11 @@ const TALogin = ({ onLoginSuccess }: TALoginProps) => {
 
   const handleStudentProfile = () => {
     if (classId) navigate(`/classes/${classId}/student-profiles`);
+    else navigate("/student-profiles");
+  };
+
+  const handleCheckoffs = () => {
+    if (classId) navigate(`/classes/${classId}/checkoffs`);
     else navigate("/student-profiles");
   };
 
@@ -165,19 +170,26 @@ const TALogin = ({ onLoginSuccess }: TALoginProps) => {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={handleStudentProfile} className="cursor-pointer">
+          {/* <DropdownMenuItem onClick={handleStudentProfile} className="cursor-pointer">
             <Users className="mr-2 h-4 w-4" />
             <span>Student Profiles</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={handleGrades} className="cursor-pointer">
             <GraduationCap className="mr-2 h-4 w-4" />
             <span>Manage Grades</span>
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuItem onClick={handleExtensions} className="cursor-pointer">
             <FileText className="mr-2 h-4 w-4" />
-            <span>Extension Requests</span>
+            <span>Review Extension Requests</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+
+        <DropdownMenuItem onClick={handleCheckoffs} className="cursor-pointer">
+            <FileText className="mr-2 h-4 w-4" />
+            <span>View Check Off</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
             <LogOut className="mr-2 h-4 w-4" />
             <span>Log out</span>

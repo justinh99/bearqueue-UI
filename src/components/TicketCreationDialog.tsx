@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { BookOpen, FlaskConical, Users, HelpCircle } from "lucide-react";
 
-const API_BASE = 'https://api.bearqueue.com'
+const API_BASE = 'http://localhost:8000'
 
 interface TicketCreationDialogProps {
   open: boolean;
@@ -72,14 +72,16 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: Ticket
     if (ticketType === "Lab") {
       if (!labType) return false;
       if (labType === "checkoff") {
-        const hasAnyTeammate =
+        if (!labNumber) return false;
+        return !!workstation && (
           (teammate1 && teammate1Email) ||
           (teammate2 && teammate2Email) ||
-          (teammate3 && teammate3Email);
-        return Boolean(workstation && hasAnyTeammate);
+          (teammate3 && teammate3Email)
+        );
       }
       if (labType === "question" && (!labNumber || !labPrompt)) return false;
     }
+    
 
     return true;
   };
@@ -270,6 +272,15 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: Ticket
 
                 {labType === "checkoff" && (
                   <div className="space-y-4">
+                     <div className="space-y-2">
+                      <Label htmlFor="lab-number-checkoff">Lab Number</Label>
+                      <Input
+                        id="lab-number-checkoff"
+                        placeholder="Ex: 3"
+                        value={labNumber}
+                        onChange={(e) => setLabNumber(e.target.value)}
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="workstation">Workstation Number</Label>
                       <Input

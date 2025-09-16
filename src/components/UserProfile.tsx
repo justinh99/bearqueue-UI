@@ -12,7 +12,7 @@ import {
 import { GraduationCap, FileText, LogOut, LogIn } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 
-const API_BASE = 'https://api.bearqueue.com'
+const API_BASE = 'http://localhost:8000'
 
 type Role = "student" | "ta" | "admin";
 type Me = {

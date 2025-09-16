@@ -12,6 +12,7 @@ import StudentProfiles from "./pages/StudentProfiles";
 import TAExtensions from "./pages/TAExtensions";
 import NotFound from "./pages/NotFound";
 import ExtensionsPage from "./pages/ExtensionsPage";
+import TAViewCheckoffs from "./pages/TAViewCheckoffs";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/classes/:classId/extension" element={<Extension />} />
           <Route path="/classes/:classId/my-extensions" element={<ExtensionsPage />} />
           <Route path="/classes/:classId/ta-extensions" element={<TAExtensions />} />
+          <Route path="/classes/:classId/checkoffs" element={<TAViewCheckoffs />} />
           <Route path="/classes/:classId" element={<ClassQueue />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
