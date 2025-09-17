@@ -11,7 +11,7 @@ import TicketCreationDialog from "@/components/TicketCreationDialog";
 import EditTicketDialog from "@/components/EditTicketDialog";
 import TALogin from "@/components/TALogin";
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = 'https://api.bearqueue.com'
 
 type ClassDetail = {
   id: string;
@@ -239,6 +239,11 @@ const handleCancel = async (t: any) => {
     subtype?: string;
     details?: string;
     location?: string;
+    hw_number?: string;
+    question_number?: string;
+    lab_number?: string;
+    workstation?: string;
+    teammates?: { id: string; email: string }[];
   }) => {
     const res = await fetch(`${API_BASE}/tickets`, {
       method: "POST",
@@ -564,12 +569,10 @@ const handleCancel = async (t: any) => {
       <TicketCreationDialog
         open={showTicketDialog}
         onOpenChange={setShowTicketDialog}
-        classId={cls.id}                      // ✅ pass the class UUID
-        onCreated={async () => {              // ✅ refresh UI after creating
-          await Promise.all([fetchTickets(), fetchStats()]);
-        }}
+        classId={cls.id}                 // ✅ pass the class UUID
+        onCreate={handleCreateTicket}    // ✅ NEW: dialog will call this with the payload
       />
-      <EditTicketDialog open={showEditDialog} onOpenChange={setShowEditDialog} ticket={editingTicket as any} onSave={handleSaveTicket as any} />
+            <EditTicketDialog open={showEditDialog} onOpenChange={setShowEditDialog} ticket={editingTicket as any} onSave={handleSaveTicket as any} />
     </div>
   );
 };

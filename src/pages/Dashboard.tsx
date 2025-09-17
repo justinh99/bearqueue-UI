@@ -28,7 +28,7 @@ type ClassItem = {
   average_wait_time?: string | null;
 };
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = 'https://api.bearqueue.com'
 
 const Dashboard = () => {
   const navigate = useNavigate();

@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, Filter, RefreshCw, Check, X, UserCheck, ArrowLeft } from "lucide-react";
 import UserProfile from "@/components/UserProfile";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE ?? "https://api.bearqueue.com";
 
 type Ticket = {
   id: string;
@@ -70,7 +70,7 @@ export default function TAViewCheckoffs() {
   // Fetch
   const fetchTickets = async () => {
     if (!classId) return;
-    const res = await fetch(`${API_BASE}/classes/${classId}/tickets`, { credentials: "include" });
+    const res = await fetch(`${API_BASE}/classes/${classId}/closed-checkoffs`, { credentials: "include" });
     if (!res.ok) throw new Error(`Failed to load tickets (${res.status})`);
     const data: Ticket[] = await res.json();
     setTickets(data);

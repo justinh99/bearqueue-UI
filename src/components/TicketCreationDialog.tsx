@@ -10,16 +10,25 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { BookOpen, FlaskConical, Users, HelpCircle } from "lucide-react";
 
-const API_BASE = 'http://localhost:8000'
-
 interface TicketCreationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  classId: string;                         // ✅ add: which class to post to
-  onCreated?: (ticket: any) => void;       // ✅ optional: callback after success
+  classId: string;
+  onCreate: (payload: {
+    class_id: string;
+    type: "OH" | "Lab";
+    subtype?: string;
+    details?: string;
+    location?: string;
+    hw_number?: string;
+    question_number?: string;
+    lab_number?: string;
+    workstation?: string;
+    teammates?: { id: string; email: string }[];
+  }) => Promise<void>;
 }
 
-const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: TicketCreationDialogProps) => {
+const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketCreationDialogProps) => {
   const [ticketType, setTicketType] = useState<"OH" | "Lab" | "">("");
   const [ohType, setOhType] = useState<"homework" | "general" | "">("");
   const [labType, setLabType] = useState<"checkoff" | "question" | "">("");
@@ -73,15 +82,14 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: Ticket
       if (!labType) return false;
       if (labType === "checkoff") {
         if (!labNumber) return false;
-        return !!workstation && (
+        const hasAtLeastOneTeammate =
           (teammate1 && teammate1Email) ||
           (teammate2 && teammate2Email) ||
-          (teammate3 && teammate3Email)
-        );
+          (teammate3 && teammate3Email);
+        return !!workstation && !!hasAtLeastOneTeammate;
       }
       if (labType === "question" && (!labNumber || !labPrompt)) return false;
     }
-    
 
     return true;
   };
@@ -91,13 +99,18 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: Ticket
     setSubmitting(true);
     setErrorMsg(null);
 
-    // Map dialog fields -> backend payload
-    let payload: {
+    // Build payload for parent to POST
+    const payload: {
       class_id: string;
       type: "OH" | "Lab";
       subtype?: string;
       details?: string;
       location?: string;
+      hw_number?: string;
+      question_number?: string;
+      lab_number?: string;
+      workstation?: string;
+      teammates?: { id: string; email: string }[];
     } = {
       class_id: classId,
       type: ticketType as "OH" | "Lab",
@@ -106,48 +119,43 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: Ticket
     if (ticketType === "OH") {
       if (ohType === "homework") {
         payload.subtype = "Homework";
+        payload.hw_number = homeworkNumber.trim();
+        payload.question_number = questionNumber.trim();
         payload.details = `HW ${homeworkNumber} – Q${questionNumber}`;
       } else if (ohType === "general") {
         payload.subtype = "General";
-        payload.details = generalQuestion;
+        payload.details = generalQuestion.trim();
       }
     }
 
     if (ticketType === "Lab") {
+      payload.lab_number = labNumber.trim();
+
       if (labType === "checkoff") {
         payload.subtype = "Check-off";
-        // include teammates/workstation in details for now
-        const teammates = [
-          teammate1 && teammate1Email ? `${teammate1} <${teammate1Email}>` : null,
-          teammate2 && teammate2Email ? `${teammate2} <${teammate2Email}>` : null,
-          teammate3 && teammate3Email ? `${teammate3} <${teammate3Email}>` : null,
-        ].filter(Boolean) as string[];
-        payload.details = `Workstation ${workstation}` + (teammates.length ? ` • Teammates: ${teammates.join(", ")}` : "");
-        payload.location = workstation; // optional: also put in location
+        payload.workstation = workstation.trim();
+        payload.location = workstation.trim(); // optional duplicate for convenience
+        payload.teammates = [
+          teammate1 && teammate1Email ? { id: teammate1.trim(), email: teammate1Email.trim() } : null,
+          teammate2 && teammate2Email ? { id: teammate2.trim(), email: teammate2Email.trim() } : null,
+          teammate3 && teammate3Email ? { id: teammate3.trim(), email: teammate3Email.trim() } : null,
+        ].filter(Boolean) as { id: string; email: string }[];
+        const teammateLabel = (payload.teammates ?? [])
+          .map(t => `${t.id} <${t.email}>`)
+          .join(", ");
+        payload.details = `Lab ${labNumber} • Workstation ${workstation}${
+          teammateLabel ? ` • Teammates: ${teammateLabel}` : ""
+        }`;
       }
+
       if (labType === "question") {
         payload.subtype = "Question";
-        payload.details = `Lab ${labNumber} – ${labPrompt}`;
+        payload.details = `Lab ${labNumber} – ${labPrompt.trim()}`;
       }
     }
 
     try {
-      const res = await fetch(`${API_BASE}/tickets`, {
-        method: "POST",
-        credentials: "include",                 // ✅ send cookie session
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `Failed to create ticket (${res.status})`);
-      }
-
-      const ticket = await res.json();
-      // call parent to refresh list / state
-      onCreated?.(ticket);
-
+      await onCreate(payload);        // parent does the POST + refresh
       resetForm();
       onOpenChange(false);
     } catch (err: any) {
@@ -272,7 +280,7 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: Ticket
 
                 {labType === "checkoff" && (
                   <div className="space-y-4">
-                     <div className="space-y-2">
+                    <div className="space-y-2">
                       <Label htmlFor="lab-number-checkoff">Lab Number</Label>
                       <Input
                         id="lab-number-checkoff"
@@ -281,6 +289,7 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreated }: Ticket
                         onChange={(e) => setLabNumber(e.target.value)}
                       />
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="workstation">Workstation Number</Label>
                       <Input
