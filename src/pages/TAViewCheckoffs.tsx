@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Users, Filter, RefreshCw, Check, X, UserCheck, ArrowLeft } from "lucide-react";
 import UserProfile from "@/components/UserProfile";
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "https://api.bearqueue.com";
+const API_BASE = 'https://api.bearqueue.com';
 
 type Ticket = {
   id: string;
