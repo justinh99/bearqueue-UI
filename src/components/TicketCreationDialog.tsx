@@ -86,7 +86,7 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
           (teammate1 && teammate1Email) ||
           (teammate2 && teammate2Email) ||
           (teammate3 && teammate3Email);
-        return !!workstation && !!hasAtLeastOneTeammate;
+        return !!workstation
       }
       if (labType === "question" && (!labNumber || !labPrompt)) return false;
     }
