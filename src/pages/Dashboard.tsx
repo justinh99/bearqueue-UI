@@ -28,7 +28,7 @@ type ClassItem = {
   average_wait_time?: string | null;
 };
 
-const API_BASE = 'https://api.bearqueue.com'
+const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 const Dashboard = () => {
   const navigate = useNavigate();

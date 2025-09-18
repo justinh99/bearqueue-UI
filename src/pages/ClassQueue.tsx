@@ -11,7 +11,7 @@ import TicketCreationDialog from "@/components/TicketCreationDialog";
 import EditTicketDialog from "@/components/EditTicketDialog";
 import TALogin from "@/components/TALogin";
 
-const API_BASE = 'https://api.bearqueue.com'
+const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 type ClassDetail = {
   id: string;
