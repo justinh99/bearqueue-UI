@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ArrowLeft, FileText, Eye, Check, X, Clock, User, Calendar, AlertTriangle, Pencil, Trash2 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import UserProfile from "@/components/UserProfile";
+import { ClassDetail } from "@/class/classDetail";
+import { useDebounce } from "@/hooks/useDebounce";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
@@ -38,14 +40,16 @@ type ExtensionRow = {
   updated_at: string;
 };
 
+
 export default function ExtensionsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const params = new URLSearchParams(location.search);
+  const [cls, setCls] = useState<ClassDetail | null>(null);
+  const { classId } = useParams<{ classId: string }>();
   const classIdFilter = params.get("class_id") || "";
 
   const [me, setMe] = useState<Me | null>(null);
-  const [loadingMe, setLoadingMe] = useState(true);
 
   const [rows, setRows] = useState<ExtensionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -62,37 +66,57 @@ export default function ExtensionsPage() {
   const [editDays, setEditDays] = useState<number>(1);
   const [editReason, setEditReason] = useState("");
 
+  const [fType, setFType] = useState<""|"homework"|"lab">("");
+  const [fNumber, setFNumber] = useState("");
+  const [fDsps, setFDsps] = useState<""|"true"|"false">("");
+  const [fName, setFName] = useState("");     // TA-only
+  const [fEmail, setFEmail] = useState("");   // TA-only
+
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20); 
+  const [total, setTotal] = useState(0);
+
   const [viewingIds, setViewingIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/me`, { credentials: "include" });
-        if (res.ok) setMe(await res.json());
-        else setMe(null);
-      } catch {
-        setMe(null);
-      } finally {
-        setLoadingMe(false);
-      }
-    })();
-  }, []);
-
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const isTA = me?.role === "ta" || me?.role === "admin";
   const approverId = me?.id ?? me?.sub ?? "";
   const approverName = me?.name ?? "";
-
   // Build list URL by role
   const listUrl = useMemo(() => {
-    if (isTA) {
-      return classIdFilter
-        ? `${API_BASE}/extensions?class_id=${encodeURIComponent(classIdFilter)}`
-        : `${API_BASE}/extensions`;
+    const url = new URL(`${API_BASE}/extensions`);
+    if (classIdFilter) url.searchParams.set("class_id", classIdFilter);
+    if (fType) url.searchParams.set("assignment_type", fType);
+    if (fNumber) url.searchParams.set("assignment_number", fNumber);
+    if (fDsps) url.searchParams.set("dsps_registered", fDsps);
+    if (isTA && fName) url.searchParams.set("student_name", fName);
+    if (isTA && fEmail) url.searchParams.set("student_email", fEmail);
+    url.searchParams.set("page", String(page));
+    url.searchParams.set("page_size", String(pageSize));
+    return url.toString();
+  }, [isTA, classIdFilter, fType, fNumber, fDsps, fName, fEmail, page, pageSize]);
+
+
+  const debouncedListUrl = useDebounce(listUrl, 500);
+
+
+  const refreshAll = async () => {
+    setErr(null);
+    try {
+      await Promise.all([fetchMe(), fetchClass(), fetchExtensions()]);
+    } catch (e: any) {
+      setErr(e.message || "Failed to load data");
+    } finally {
+      setLoading(false);
     }
-    // student:
-    const base = `${API_BASE}/extensions?mine=1`;
-    return classIdFilter ? `${base}&class_id=${encodeURIComponent(classIdFilter)}` : base;
-  }, [isTA, classIdFilter]);
+  };
+
+  const fetchMe = async () => {
+    const res = await fetch(`${API_BASE}/me`, { credentials: "include" });
+    if (res.ok) setMe(await res.json());
+    else setMe(null);
+  };
+
 
   const fetchExtensions = async () => {
     setLoading(true);
@@ -100,7 +124,10 @@ export default function ExtensionsPage() {
     try {
       const res = await fetch(listUrl, { credentials: "include" });
       if (!res.ok) throw new Error(await res.text());
-      setRows(await res.json());
+      const data = await res.json(); // { items, total, page, page_size }
+      setRows(data.items);
+      setTotal(data.total);
+      // (You already track page/pageSize in state)
     } catch (e: any) {
       setErr(e.message || "Failed to load extensions");
     } finally {
@@ -108,10 +135,19 @@ export default function ExtensionsPage() {
     }
   };
 
+  const fetchClass = async () => {
+    if (!classId) return;
+    const res = await fetch(`${API_BASE}/classes/${classId}`, { credentials: "include" });
+    if (!res.ok) throw new Error(`Failed to fetch class (${res.status})`);
+    setCls(await res.json());
+  };
+
+
   useEffect(() => {
-    if (!loadingMe) fetchExtensions();
+    setLoading(true);
+    refreshAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listUrl, loadingMe]);
+  }, [debouncedListUrl]);
 
   const pendingCount = useMemo(() => rows.filter(r => r.status === "pending").length, [rows]);
   const viewingCount = useMemo(() => rows.filter(r => r.status === "pending" && viewingIds.has(r.id)).length, [rows, viewingIds]);
@@ -197,11 +233,8 @@ export default function ExtensionsPage() {
     fetchExtensions();
   };
 
-  if (loadingMe || loading) {
+  if (loading) {
     return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5"><div className="container mx-auto p-6">Loading…</div></div>;
-  }
-  if (!me) {
-    return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5"><div className="container mx-auto p-6">Please sign in.</div></div>;
   }
 
   return (
@@ -213,6 +246,18 @@ export default function ExtensionsPage() {
             <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="flex items-center">
               <ArrowLeft className="w-4 h-4 mr-2" /> Back
             </Button>
+            <div
+              className="cursor-pointer hover:opacity-80 transition"
+              onClick={() => navigate(`/classes/${cls.id}`)}
+            >
+              <h1 className="text-3xl font-bold text-foreground">
+                {cls.department_code} {cls.class_number}
+              </h1>
+              <p className="text-muted-foreground">{cls.class_name}</p>
+              <p className="text-sm text-muted-foreground">
+                {(cls.instructor_name || "TBA")} • {cls.semester} {cls.year} • {cls.school}
+              </p>
+            </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">
                 {isTA ? "Extension Requests" : "My Extensions"}
@@ -267,6 +312,80 @@ export default function ExtensionsPage() {
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Filters</CardTitle>
+                <CardDescription>Refine extension requests</CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-6">
+                <div className="space-y-1">
+                  <Label>Type</Label>
+                  <select
+                    className="border rounded-md h-9 px-2"
+                    value={fType}
+                    onChange={(e) => { setPage(1); setFType(e.target.value as any); }}
+                  >
+                    <option value="">Any</option>
+                    <option value="homework">Homework</option>
+                    <option value="lab">Lab</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <Label>Number</Label>
+                  <Input
+                    value={fNumber}
+                    onChange={(e) => { setPage(1); setFNumber(e.target.value); }}
+                    placeholder="e.g. 3"
+                  />
+                </div>
+                {isTA && (
+                  <>
+                    <div className="space-y-1">
+                      <Label>DSPS</Label>
+                      <select
+                        className="w-full h-10 border rounded-md h-9 px-2"
+                        value={fDsps}
+                        onChange={(e) => { setPage(1); setFDsps(e.target.value as any); }}
+                      >
+                        <option value="">Any</option>
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Name</Label>
+                      <Input
+                        value={fName}
+                        onChange={(e) => { setPage(1); setFName(e.target.value); }}
+                        placeholder="Student Name"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label>Email</Label>
+                      <Input
+                        value={fEmail}
+                        onChange={(e) => { setPage(1); setFEmail(e.target.value); }}
+                        placeholder="Student Email"
+                      />
+                    </div>
+                  </>
+                )}
+                <div className="space-y-1">
+                  <Label>Page size</Label>
+                  <select
+                    className="w-full h-10 border rounded-md px-2 text-sm"
+                    value={pageSize}
+                    onChange={(e) => { setPage(1); setPageSize(Number(e.target.value)); }}
+                  >
+                    {[10, 20, 50, 100].map(n => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </div>
+              </CardContent>
+            </Card>
+
 
             {/* List */}
             <Card>
@@ -331,6 +450,31 @@ export default function ExtensionsPage() {
                       {idx < rows.length - 1 && <Separator className="my-2" />}
                     </div>
                   ))}
+                </div>
+
+
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-sm text-muted-foreground">
+                    Page {page} / {totalPages} • {total} result{total === 1 ? "" : "s"}
+                  </div>
+                  <div className="space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      disabled={page >= totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

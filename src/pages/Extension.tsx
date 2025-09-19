@@ -20,12 +20,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ClassDetail } from "@/class/classDetail";
+import { Me } from "@/class/auth";
 
 const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 const Extension = () => {
   const navigate = useNavigate();
   const { classId } = useParams<{ classId: string }>();
+  const params = new URLSearchParams(location.search);
+const [cls, setCls] = useState<ClassDetail | null>(null);
+
 
   // Form states
   const [assignmentType, setAssignmentType] = useState<"homework" | "lab" | "">("");
@@ -37,19 +42,44 @@ const Extension = () => {
   const [dspsRegistered, setDspsRegistered] = useState<boolean | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
+  const [me, setMe] = useState<Me | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+
+
+  const fetchClass = async () => {
+    if (!classId) return;
+    const res = await fetch(`${API_BASE}/classes/${classId}`, { credentials: "include" });
+    if (!res.ok) throw new Error(`Failed to fetch class (${res.status})`);
+    setCls(await res.json());
+  };
+
+
+  const fetchMe = async () => {
+    const res = await fetch(`${API_BASE}/me`, { credentials: "include" });
+    if (res.ok) setMe(await res.json());
+    else setMe(null);
+  };
+
+
+  const refreshAll = async () => {
+    setErr(null);
+    try {
+      await Promise.all([fetchMe(), fetchClass()]);
+    } catch (e: any) {
+      setErr(e.message || "Failed to load data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // (Optional) fetch class for header context
   const [className, setClassName] = useState<string>("");
+
+
   useEffect(() => {
-    if (!classId) return;
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/classes/${classId}`, { credentials: "include" });
-        if (res.ok) {
-          const c = await res.json();
-          setClassName(`${c.department_code} ${c.class_number} • ${c.semester} ${c.year}`);
-        }
-      } catch {}
-    })();
+    setLoading(true);
+    refreshAll();
   }, [classId]);
 
   const isFormValid = () => {
@@ -108,6 +138,10 @@ const Extension = () => {
     );
   }
 
+  if (loading) {
+    return <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5"><div className="container mx-auto p-6">Loading…</div></div>;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
       <div className="container mx-auto p-6 max-w-4xl">
@@ -118,6 +152,18 @@ const Extension = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
+            <div
+              className="cursor-pointer hover:opacity-80 transition"
+              onClick={() => navigate(`/classes/${cls.id}`)}
+            >
+              <h1 className="text-3xl font-bold text-foreground">
+                {cls.department_code} {cls.class_number}
+              </h1>
+              <p className="text-muted-foreground">{cls.class_name}</p>
+              <p className="text-sm text-muted-foreground">
+                {(cls.instructor_name || "TBA")} • {cls.semester} {cls.year} • {cls.school}
+              </p>
+            </div>
             <div>
               <h1 className="text-3xl font-bold text-foreground">Request Extension</h1>
               <p className="text-muted-foreground">

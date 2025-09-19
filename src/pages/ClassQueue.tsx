@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -10,50 +10,11 @@ import UserProfile from "@/components/UserProfile";
 import TicketCreationDialog from "@/components/TicketCreationDialog";
 import EditTicketDialog from "@/components/EditTicketDialog";
 import TALogin from "@/components/TALogin";
+import { ClassDetail, Stats } from "@/class/classDetail";
+import { Me } from "@/class/auth";
+import { Ticket } from "@/class/ticket";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
-
-type ClassDetail = {
-  id: string;
-  school: string;
-  department_code: string;
-  class_number: string;
-  class_name: string;
-  semester: "Spring" | "Summer" | "Fall" | "Winter";
-  year: number;
-  instructor_name?: string | null;
-  status: "active" | "closed";
-  students_in_queue: number;
-  average_wait_time?: string | null;
-};
-
-type Stats = {
-  class_id: string;
-  students_in_queue: number;
-  students_being_helped: number;
-  average_help_time?: number | null; // minutes
-  estimated_wait_time?: number | null;
-};
-
-type Ticket = {
-  id: string;
-  class_id: string;
-  student_id: string;
-  student_name: string;
-  student_email?: string | null;
-  type: "OH" | "Lab";
-  subtype?: string | null;
-  details?: string | null;
-  location?: string | null;
-  status: "waiting" | "being_helped" | "done" | "cancelled";
-  created_at: string;
-  updated_at: string;
-  started_help_at?: string | null;
-  finished_at?: string | null;
-};
-
-
-type Me = { sub: string; name: string; email: string; role: string };
 
 const ClassQueue = () => {
   const { classId } = useParams<{ classId: string }>();
@@ -70,6 +31,7 @@ const ClassQueue = () => {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
   const [userRole, setUserRole] = useState<"student" | "ta">("student");
+  const navigate = useNavigate();
 
   // derived: does current user already have an open ticket?
   const myOpenTicket = useMemo(
@@ -314,24 +276,30 @@ const handleCancel = async (t: any) => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-secondary/5">
       <div className="container mx-auto p-6">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              {cls.department_code} {cls.class_number}
-            </h1>
-            <p className="text-muted-foreground">{cls.class_name}</p>
-            <p className="text-sm text-muted-foreground">
-              {(cls.instructor_name || "TBA")} • {cls.semester} {cls.year} • {cls.school}
-            </p>
+          <div className="flex justify-between items-center mb-8">
+            {/* Clickable class info */}
+            <div
+              className="cursor-pointer hover:opacity-80 transition"
+              onClick={() => navigate(`/classes/${cls.id}`)}
+            >
+              <h1 className="text-3xl font-bold text-foreground">
+                {cls.department_code} {cls.class_number}
+              </h1>
+              <p className="text-muted-foreground">{cls.class_name}</p>
+              <p className="text-sm text-muted-foreground">
+                {(cls.instructor_name || "TBA")} • {cls.semester} {cls.year} • {cls.school}
+              </p>
+            </div>
+
+            {/* Right side controls */}
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" size="icon" onClick={refreshAll} title="Refresh">
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+              <TALogin onLoginSuccess={setUserRole} />
+              <UserProfile />
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="icon" onClick={refreshAll} title="Refresh">
-              <RefreshCw className="w-4 h-4" />
-            </Button>
-            <TALogin onLoginSuccess={setUserRole} />
-            <UserProfile />
-          </div>
-        </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Queue Stats */}
