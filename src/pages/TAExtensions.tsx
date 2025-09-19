@@ -26,7 +26,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import UserProfile from "@/components/UserProfile";
 
-const API_BASE = 'https://api.bearqueue.com';
+const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 type Role = "student" | "ta" | "admin";
 type Me = {

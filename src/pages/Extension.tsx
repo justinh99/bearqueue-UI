@@ -21,7 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const API_BASE = 'https://api.bearqueue.com';
+const API_BASE = import.meta.env.VITE_API_BASE as string;
 
 const Extension = () => {
   const navigate = useNavigate();
