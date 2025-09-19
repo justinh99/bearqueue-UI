@@ -1,0 +1,1 @@
+export type Me = { sub: string; name: string; email: string; role: string };
