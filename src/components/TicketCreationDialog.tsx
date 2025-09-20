@@ -224,9 +224,21 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
                     <RadioGroupItem value="general" id="general" />
                     <Label htmlFor="general">General Question</Label>
                   </div>
+                  <div className="space-y-2">
+                      <Label htmlFor="workstation">Workstation Number / Location</Label>
+                      <Input
+                        id="workstation"
+                        placeholder="Ex: WS5"
+                        value={workstation}
+                        onChange={(e) => setWorkstation(e.target.value)}
+                        onFocus={(e) => { if (e.target.placeholder === "Ex: WS5") e.target.placeholder = ""; }}
+                        onBlur={(e) => { if (!e.target.value) e.target.placeholder = "Ex: WS5"; }}
+                      />
+                  </div>
                 </RadioGroup>
 
                 {ohType === "homework" && (
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="hw-number">Homework Number</Label>
@@ -240,6 +252,7 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
                 )}
 
                 {ohType === "general" && (
+                  
                   <div className="space-y-2">
                     <Label htmlFor="general-q">Describe your question</Label>
                     <Textarea
@@ -276,7 +289,20 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
                       Lab Question
                     </Label>
                   </div>
+
+                  <div className="space-y-2">
+                      <Label htmlFor="workstation">Workstation Number / Location</Label>
+                      <Input
+                        id="workstation"
+                        placeholder="Ex: WS5"
+                        value={workstation}
+                        onChange={(e) => setWorkstation(e.target.value)}
+                        onFocus={(e) => { if (e.target.placeholder === "Ex: WS5") e.target.placeholder = ""; }}
+                        onBlur={(e) => { if (!e.target.value) e.target.placeholder = "Ex: WS5"; }}
+                      />
+                  </div>
                 </RadioGroup>
+                
 
                 {labType === "checkoff" && (
                   <div className="space-y-4">
@@ -287,18 +313,6 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
                         placeholder="Ex: 3"
                         value={labNumber}
                         onChange={(e) => setLabNumber(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="workstation">Workstation Number</Label>
-                      <Input
-                        id="workstation"
-                        placeholder="Ex: WS5"
-                        value={workstation}
-                        onChange={(e) => setWorkstation(e.target.value)}
-                        onFocus={(e) => { if (e.target.placeholder === "Ex: WS5") e.target.placeholder = ""; }}
-                        onBlur={(e) => { if (!e.target.value) e.target.placeholder = "Ex: WS5"; }}
                       />
                     </div>
 
@@ -347,6 +361,7 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
                       <Label htmlFor="lab-number">Lab Number</Label>
                       <Input id="lab-number" placeholder="Ex: 3" value={labNumber} onChange={(e) => setLabNumber(e.target.value)} />
                     </div>
+                   
                     <div className="space-y-2">
                       <Label htmlFor="lab-prompt">Question/Prompt</Label>
                       <Input
