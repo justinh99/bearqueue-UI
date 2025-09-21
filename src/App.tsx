@@ -33,6 +33,7 @@ const App = () => (
           <Route path="/classes/:classId/ta-extensions" element={<TAExtensions />} />
           <Route path="/classes/:classId/checkoffs" element={<TAViewCheckoffs />} />
           <Route path="/classes/:classId" element={<ClassQueue />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

@@ -219,6 +219,16 @@ const UserProfile = ({ classId }: UserProfileProps) => {
           <LogOut className="mr-2 h-4 w-4" />
           <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
         </DropdownMenuItem>
+
+        {me?.role === "admin" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => navigate("/admin/users")} className="cursor-pointer">
+              <FileText className="mr-2 h-4 w-4" />
+              <span>Manage Users</span>
+            </DropdownMenuItem>
+          </>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
