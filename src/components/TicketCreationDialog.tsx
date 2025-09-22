@@ -9,6 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { BookOpen, FlaskConical, Users, HelpCircle } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface TicketCreationDialogProps {
   open: boolean;
@@ -308,12 +315,21 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="lab-number-checkoff">Lab Number</Label>
-                      <Input
-                        id="lab-number-checkoff"
-                        placeholder="Ex: 3"
+                      <Select
                         value={labNumber}
-                        onChange={(e) => setLabNumber(e.target.value)}
-                      />
+                        onValueChange={(val) => setLabNumber(val)}
+                      >
+                        <SelectTrigger id="lab-number-checkoff" className="w-full">
+                          <SelectValue placeholder="Choose a lab number" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Array.from({ length: 10 }, (_, i) => (
+                            <SelectItem key={i + 1} value={(i + 1).toString()}>
+                              Lab {i + 1}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div className="space-y-4">
