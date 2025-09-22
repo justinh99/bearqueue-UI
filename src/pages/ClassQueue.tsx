@@ -51,7 +51,7 @@ const ClassQueue = () => {
   const displayName = cls ? `${cls.department_code} ${cls.class_number}` : "";
   const displayInstructor = cls?.instructor_name || "TBA";
 
-  const isTA = me?.role === "ta";
+  const isTA = me?.role === "ta" || me?.role ==="admin";
 
 const patchTicket = async (
   ticketId: string,

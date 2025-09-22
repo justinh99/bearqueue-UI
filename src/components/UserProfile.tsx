@@ -101,6 +101,17 @@ const UserProfile = ({ classId }: UserProfileProps) => {
     }
   };
 
+  const handleCheckoffs = () => {
+    if (effectiveClassId) navigate(`/classes/${effectiveClassId}/checkoffs`);
+    else navigate("/dashboard");
+  };
+
+  const handleUsers = () => {
+    if (effectiveClassId) navigate(`/classes/${effectiveClassId}/users`);
+    else navigate("/dashboard");
+  };
+
+
   const handleLogout = async () => {
     if (isLoggingOut) return;
     setIsLoggingOut(true);
@@ -208,6 +219,25 @@ const UserProfile = ({ classId }: UserProfileProps) => {
           <FileText className="mr-2 h-4 w-4" />
           <span>Request Extension</span>
         </DropdownMenuItem>
+      {(me?.role === "ta" || me?.role ==="admin") && (
+        <>
+        <DropdownMenuItem onClick={handleCheckoffs} className="cursor-pointer">
+            <FileText className="mr-2 h-4 w-4" />
+            <span>View Check Off</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          </>
+      )}
+
+        {me?.role === "admin" && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleUsers} className="cursor-pointer">
+              <FileText className="mr-2 h-4 w-4" />
+              <span>Manage Users</span>
+            </DropdownMenuItem>
+          </>
+        )}
 
         <DropdownMenuSeparator />
 
@@ -219,16 +249,6 @@ const UserProfile = ({ classId }: UserProfileProps) => {
           <LogOut className="mr-2 h-4 w-4" />
           <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
         </DropdownMenuItem>
-
-        {me?.role === "admin" && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/admin/users")} className="cursor-pointer">
-              <FileText className="mr-2 h-4 w-4" />
-              <span>Manage Users</span>
-            </DropdownMenuItem>
-          </>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
