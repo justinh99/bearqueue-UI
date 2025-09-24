@@ -123,15 +123,17 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
       type: ticketType as "OH" | "Lab",
     };
 
+    payload.workstation = workstation.trim();
+    payload.location = workstation.trim();
     if (ticketType === "OH") {
       if (ohType === "homework") {
         payload.subtype = "Homework";
         payload.hw_number = homeworkNumber.trim();
         payload.question_number = questionNumber.trim();
-        payload.details = `HW ${homeworkNumber} – Q${questionNumber}`;
+        payload.details = `HW ${homeworkNumber} – Q${questionNumber} • Workstation ${workstation}`;
       } else if (ohType === "general") {
         payload.subtype = "General";
-        payload.details = generalQuestion.trim();
+        payload.details = generalQuestion.trim() + ` • Workstation ${workstation}`;
       }
     }
 
@@ -140,8 +142,6 @@ const TicketCreationDialog = ({ open, onOpenChange, classId, onCreate }: TicketC
 
       if (labType === "checkoff") {
         payload.subtype = "Check-off";
-        payload.workstation = workstation.trim();
-        payload.location = workstation.trim(); // optional duplicate for convenience
         payload.teammates = [
           teammate1 && teammate1Email ? { id: teammate1.trim(), email: teammate1Email.trim() } : null,
           teammate2 && teammate2Email ? { id: teammate2.trim(), email: teammate2Email.trim() } : null,
