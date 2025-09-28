@@ -387,6 +387,7 @@ const handleCancel = async (t: any) => {
                                   {t.type}
                                   {t.subtype ? ` - ${t.subtype}` : ""}
                                 </span>
+                                <div>{`Location: ${t.location}`}</div>
                               </div>
                               {t.details && <p className="text-sm text-muted-foreground">{t.details}</p>}
                             </div>
